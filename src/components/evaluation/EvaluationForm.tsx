@@ -20,7 +20,6 @@ import { Label } from "@/components/ui/label";
 
 import { calculatePropertyEvaluation, calculateTotalPrice } from "@/services/evaluationService";
 import { getAIScores } from "@/services/apiService";
-import { EvaluationScores } from "@/services/evaluationService";
 
 const cities = [
   { id: "ningbo", name: "宁波市" },
@@ -95,16 +94,20 @@ export default function EvaluationForm() {
         totalPrice,
         detailedScores
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("评估失败:", err);
       let errorMessage = "评估失败，请稍后再试";
       
-      if (err.message.includes('429')) {
-        errorMessage = "请求过于频繁，请等待1分钟后重试";
-      } else if (err.message.includes('API密钥')) {
-        errorMessage = "API配置错误，请联系管理员";
-      } else if (err.message.includes('必需字段')) {
-        errorMessage = "评估数据不完整，请检查输入";
+      if (err instanceof Error) {
+        if (err.message.includes('429')) {
+          errorMessage = "请求过于频繁，请等待1分钟后重试";
+        } else if (err.message.includes('API密钥')) {
+          errorMessage = "API配置错误，请联系管理员";
+        } else if (err.message.includes('必需字段')) {
+          errorMessage = "评估数据不完整，请检查输入";
+        }
+      } else {
+        errorMessage = `未知错误: ${String(err)}`;
       }
       
       setError(errorMessage);

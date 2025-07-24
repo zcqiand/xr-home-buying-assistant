@@ -24,7 +24,7 @@ export async function getAIScores(
   }
 
   // 添加重试机制处理速率限制
-  let retries = 3;
+  const retries = 3;
   let delay = 1000; // 初始延迟1秒
   let lastError = null;
 
