@@ -26,17 +26,18 @@ const cities = [
 ];
 
 const districts = [
-  { id: "yinzhou", name: "鄞州区" },
-  { id: "haishu", name: "海曙区" },
-  { id: "jiangbei", name: "江北区" },
-  { id: "zhenhai", name: "镇海区" },
-  { id: "beilun", name: "北仑区" },
-  { id: "fenghua", name: "奉化区" },
+  { id: "yinzhou", name: "鄞州区", basePrice: 25554 },
+  { id: "haishu", name: "海曙区", basePrice: 20141 },
+  { id: "jiangbei", name: "江北区", basePrice: 22879 },
+  { id: "zhenhai", name: "镇海区", basePrice: 25000 },
+  { id: "beilun", name: "北仑区", basePrice: 14715 },
+  { id: "fenghua", name: "奉化区", basePrice: 17831 },
 ];
 
 export default function EvaluationForm() {
   const [city, setCity] = useState("");
   const [district, setDistrict] = useState("");
+  const [basePrice, setBasePrice] = useState<number | string>("");
   const [community, setCommunity] = useState("");
   const [area, setArea] = useState<number | string>("");
   const [layout, setLayout] = useState("");
@@ -56,7 +57,11 @@ export default function EvaluationForm() {
       buildingAgeScores: Record<string, number>;
       layoutScores: Record<string, number>;
       surroundingScores: Record<string, number>;
-    }
+    };
+    prosCons?: {
+      pros: string[];
+      cons: string[];
+    };
   } | null>(null);
   
   const [showDetails, setShowDetails] = useState(false);
@@ -68,7 +73,7 @@ export default function EvaluationForm() {
     e.preventDefault();
     
     // 验证基本字段
-    if (!city || !district || !area || !community || !layout) {
+    if (!city || !district || !basePrice || !area || !community || !layout) {
       setError("请填写所有必填字段");
       return;
     }
@@ -81,18 +86,22 @@ export default function EvaluationForm() {
       // 调用AI获取评分
       const scores = await getAIScores(community, district, layout);
       
+      const basePriceValue = typeof basePrice === 'string' ? parseFloat(basePrice) : basePrice;
       const { totalScore, pricePerSqM, detailedScores } = calculatePropertyEvaluation(
         scores,
-        district
+        basePriceValue
       );
       
       const totalPrice = calculateTotalPrice(pricePerSqM, areaValue);
       
+      console.log('AI返回的prosCons数据:', scores.prosCons); // 调试日志
+      console.log('AI返回的prosCons数据:', scores.prosCons); // 调试日志
       setResult({
         totalScore,
         pricePerSqM,
         totalPrice,
-        detailedScores
+        detailedScores,
+        prosCons: scores.prosCons
       });
     } catch (err: unknown) {
       console.error("评估失败:", err);
@@ -119,6 +128,7 @@ export default function EvaluationForm() {
   const resetForm = () => {
     setCity("");
     setDistrict("");
+    setBasePrice("");
     setCommunity("");
     setArea("");
     setLayout("");
@@ -154,7 +164,17 @@ export default function EvaluationForm() {
 
           <div>
             <Label htmlFor="district">区域板块</Label>
-            <Select onValueChange={setDistrict} value={district}>
+            <Select
+              onValueChange={(value) => {
+                setDistrict(value);
+                // 设置选中区域的默认基准房价
+                const selectedDistrict = districts.find(d => d.id === value);
+                if (selectedDistrict) {
+                  setBasePrice(selectedDistrict.basePrice.toString());
+                }
+              }}
+              value={district}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="选择区域" />
               </SelectTrigger>
@@ -166,6 +186,18 @@ export default function EvaluationForm() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="basePrice">基准房价 (元/平方米)</Label>
+            <Input
+              id="basePrice"
+              type="number"
+              value={basePrice}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBasePrice(e.target.value)}
+              placeholder="输入基准房价"
+              min="1"
+            />
           </div>
 
           <div>
@@ -255,7 +287,30 @@ export default function EvaluationForm() {
                   户型: {layout}
                 </div>
               )}
-            </div>
+            </div>            
+            {result.prosCons && (result.prosCons.pros.length > 0 || result.prosCons.cons.length > 0) && (
+              <div className="mt-4 border rounded-lg p-4 bg-blue-50">
+                <h4 className="font-semibold mb-2">房源点评</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h5 className="font-medium text-green-600">优点：</h5>
+                    <ul className="list-disc pl-5">
+                      {result.prosCons.pros.map((pro, index) => (
+                        <li key={index}>{pro}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-red-600">缺点：</h5>
+                    <ul className="list-disc pl-5">
+                      {result.prosCons.cons.map((con, index) => (
+                        <li key={index}>{con}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
             {result.detailedScores && (
               <div className="mt-4">
                 <Button

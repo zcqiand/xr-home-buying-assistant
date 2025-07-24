@@ -1,4 +1,9 @@
 import { EvaluationScores } from "./evaluationService";
+
+interface ProsCons {
+  pros: string[];
+  cons: string[];
+}
 import { 
   locationCriteria,
   conditionCriteria,
@@ -16,7 +21,7 @@ export async function getAIScores(
   community: string,
   district: string,
   layout: string
-): Promise<EvaluationScores> {
+): Promise<EvaluationScores & { prosCons: ProsCons }> {
   
   // 确保API密钥存在
   if (!OPENROUTER_API_KEY) {
@@ -56,7 +61,11 @@ export async function getAIScores(
         "conditionScores": { ... },
         "buildingAgeScores": { ... },
         "layoutScores": { ... },
-        "surroundingScores": { ... }
+        "surroundingScores": { ... },
+        "prosCons": {
+          "pros": ["优点1", "优点2"],
+          "cons": ["缺点1", "缺点2"]
+        }
       }
       3. 每个字段的值应为包含具体评分项的对象`;
 
@@ -114,7 +123,8 @@ export async function getAIScores(
         'conditionScores',
         'buildingAgeScores',
         'layoutScores',
-        'surroundingScores'
+        'surroundingScores',
+        'prosCons'
       ];
       
       for (const key of requiredKeys) {
