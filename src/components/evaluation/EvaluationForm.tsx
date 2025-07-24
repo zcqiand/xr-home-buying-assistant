@@ -35,12 +35,17 @@ const districts = [
 ];
 
 export default function EvaluationForm() {
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState("ningbo");
   const [district, setDistrict] = useState("");
   const [basePrice, setBasePrice] = useState<number | string>("");
   const [community, setCommunity] = useState("");
   const [area, setArea] = useState<number | string>("");
-  const [layout, setLayout] = useState("");
+  const [layout, setLayout] = useState("3室2厅1卫");
+  const [floorCurrent, setFloorCurrent] = useState<number | string>("");
+  const [floorTotal, setFloorTotal] = useState<number | string>("");
+  const [direction, setDirection] = useState("2南向卧室+1南向客厅+1北向卧室+西向厨房+北向卫生间");
+  const [decoration, setDecoration] = useState("");
+  const [additionalDesc, setAdditionalDesc] = useState("");
   
   const [result, setResult] = useState<{
     totalScore: number;
@@ -73,7 +78,7 @@ export default function EvaluationForm() {
     e.preventDefault();
     
     // 验证基本字段
-    if (!city || !district || !basePrice || !area || !community || !layout) {
+    if (!city || !district || !basePrice || !area || !community || !layout || !floorCurrent || !floorTotal || !direction || !decoration) {
       setError("请填写所有必填字段");
       return;
     }
@@ -90,7 +95,15 @@ export default function EvaluationForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ community, district, layout })
+        body: JSON.stringify({
+          community,
+          district,
+          layout,
+          floor: `${floorCurrent}/${floorTotal}`, // 组合楼层信息
+          direction, // 朝向
+          renovation: decoration, // 装修程度
+          additionalDesc
+        })
       });
       
       if (!response.ok) {
@@ -140,12 +153,17 @@ export default function EvaluationForm() {
   };
   
   const resetForm = () => {
-    setCity("");
+    setCity("ningbo");
     setDistrict("");
     setBasePrice("");
     setCommunity("");
     setArea("");
-    setLayout("");
+    setLayout("3室2厅1卫");
+    setFloorCurrent("");
+    setFloorTotal("");
+    setDirection("2南向卧室+1南向客厅+1北向卧室+西向厨房+北向卫生间");
+    setDecoration("");
+    setAdditionalDesc("");
     setResult(null);
     setError("");
   };
@@ -225,24 +243,83 @@ export default function EvaluationForm() {
           </div>
 
           <div>
-            <Label htmlFor="area">房源面积 (平方米)</Label>
+            <Label htmlFor="area">面积 (平方米)</Label>
             <Input
               id="area"
               type="number"
               value={area}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setArea(e.target.value)}
-              placeholder="输入房源面积"
+              placeholder="输入面积"
               min="1"
             />
           </div>
 
           <div>
-            <Label htmlFor="layout">户型描述</Label>
+            <Label htmlFor="layout">户型</Label>
             <Input
               id="layout"
               value={layout}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLayout(e.target.value)}
               placeholder="例如：3室2厅2卫"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="floorCurrent">当前楼层</Label>
+            <Input
+              id="floorCurrent"
+              type="number"
+              value={floorCurrent}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFloorCurrent(e.target.value)}
+              placeholder="输入当前楼层"
+              min="1"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="floorTotal">总楼层</Label>
+            <Input
+              id="floorTotal"
+              type="number"
+              value={floorTotal}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFloorTotal(e.target.value)}
+              placeholder="输入总楼层"
+              min="1"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="direction">朝向</Label>
+            <Input
+              id="direction"
+              value={direction}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDirection(e.target.value)}
+              placeholder="例如：3房朝南"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="decoration">装修程度</Label>
+            <Select onValueChange={setDecoration} value={decoration}>
+              <SelectTrigger>
+                <SelectValue placeholder="选择装修程度" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rough">毛坯</SelectItem>
+                <SelectItem value="simple">简装</SelectItem>
+                <SelectItem value="hardcover">精装</SelectItem>
+                <SelectItem value="luxury">豪装</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="additionalDesc">补充描述</Label>
+            <Input
+              id="additionalDesc"
+              value={additionalDesc}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAdditionalDesc(e.target.value)}
+              placeholder="输入补充描述"
             />
           </div>
         </div>
@@ -291,14 +368,21 @@ export default function EvaluationForm() {
                   {(result.totalPrice / 10000).toLocaleString()} 万元
                 </div>
               </div>
-              {community && (
+              <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                {community && <div>小区: {community}</div>}
+                {layout && <div>户型: {layout}</div>}
+                {floorCurrent && <div>当前楼层: {floorCurrent}</div>}
+                {floorTotal && <div>总楼层: {floorTotal}</div>}
+                {direction && <div>朝向: {direction}</div>}
+                {decoration && <div>装修程度: {
+                  decoration === "rough" ? "毛坯" :
+                  decoration === "simple" ? "简装" :
+                  decoration === "hardcover" ? "精装" : "豪装"
+                }</div>}
+              </div>
+              {additionalDesc && (
                 <div className="text-sm text-muted-foreground">
-                  小区: {community}
-                </div>
-              )}
-              {layout && (
-                <div className="text-sm text-muted-foreground">
-                  户型: {layout}
+                  补充描述: {additionalDesc}
                 </div>
               )}
             </div>            

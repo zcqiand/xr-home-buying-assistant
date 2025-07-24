@@ -3,7 +3,7 @@ import { getAIScores } from '@/services/apiService'
 
 export async function POST(req: NextRequest) {
   try {
-    const { community, district, layout } = await req.json()
+    const { community, district, layout, floor, direction, renovation, additionalDesc } = await req.json()
     
     // 从环境变量获取配置（服务器端安全）
     const config: {
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const result = await getAIScores(community, district, layout, config)
+    const result = await getAIScores(community, district, floor, direction, renovation, layout, additionalDesc, config)
     return NextResponse.json(result)
   } catch (error: unknown) {
     console.error('API evaluation error:', error)

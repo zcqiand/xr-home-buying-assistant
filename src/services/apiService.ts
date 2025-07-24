@@ -15,7 +15,11 @@ import {
 export async function getAIScores(
   community: string,
   district: string,
+  floor: string,
+  direction: string,
+  renovation: string,
   layout: string,
+  additionalDesc: string,
   config: {
     apiKey: string | undefined;
     siteUrl: string;
@@ -70,7 +74,7 @@ export async function getAIScores(
       }
       3. 每个字段的值应为包含具体评分项的对象`;
 
-      const userPrompt = `评估宁波市${district}的${community}小区，户型描述：${layout}`;
+      const userPrompt = `评估宁波市${district}的${community}小区，${floor}，朝向${direction}，${renovation}装修，户型${layout}，补充描述：${additionalDesc}`;
 
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
