@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "海鲜估房价-使用AI大模型评估二手房房价",
+  title: "海鲜购房助手-使用AI大模型评估二手房房价",
   description: "使用AI大模型评估二手房房价",
 };
 

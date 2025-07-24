@@ -6,7 +6,7 @@ export default function EvaluationPage() {
     <div className="container mx-auto py-8">
       <Card>
         <CardHeader>
-          <CardTitle>海鲜估房价</CardTitle>
+          <CardTitle>海鲜购房助手 / 房屋估价</CardTitle>
         </CardHeader>
         <CardContent>
           <EvaluationForm />
