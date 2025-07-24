@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { calculatePropertyEvaluation, calculateTotalPrice } from "@/services/evaluationService";
-import { getAIScores } from "@/services/apiService";
+// 移除客户端直接调用
 
 const cities = [
   { id: "ningbo", name: "宁波市" },
@@ -84,7 +84,21 @@ export default function EvaluationForm() {
       const areaValue = typeof area === 'string' ? parseFloat(area) : area;
       
       // 调用AI获取评分
-      const scores = await getAIScores(community, district, layout);
+      // 调用服务器端API
+      const response = await fetch('/api/evaluate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ community, district, layout })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '评估请求失败');
+      }
+      
+      const scores = await response.json();
       
       const basePriceValue = typeof basePrice === 'string' ? parseFloat(basePrice) : basePrice;
       const { totalScore, pricePerSqM, detailedScores } = calculatePropertyEvaluation(

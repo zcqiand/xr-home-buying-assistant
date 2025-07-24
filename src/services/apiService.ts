@@ -12,19 +12,20 @@ import {
   surroundingCriteria
 } from "../constants/evaluationCriteria";
 
-const OPENROUTER_API_KEY = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
-const YOUR_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
-const YOUR_SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME;
-const YOUR_MODEL_NAME = process.env.NEXT_PUBLIC_MODEL_NAME;
-
 export async function getAIScores(
   community: string,
   district: string,
-  layout: string
+  layout: string,
+  config: {
+    apiKey: string | undefined;
+    siteUrl: string;
+    siteName: string;
+    modelName: string;
+  }
 ): Promise<EvaluationScores & { prosCons: ProsCons }> {
   
   // 确保API密钥存在
-  if (!OPENROUTER_API_KEY) {
+  if (!config.apiKey) {
     throw new Error("OpenRouter API密钥未配置");
   }
 
@@ -74,13 +75,13 @@ export async function getAIScores(
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-          'HTTP-Referer': YOUR_SITE_URL || 'http://localhost:3000',
-          'X-Title': YOUR_SITE_NAME || 'Local Dev App', // Must be ISO-8859-1 characters
+          'Authorization': `Bearer ${config.apiKey}`,
+          'HTTP-Referer': config.siteUrl,
+          'X-Title': config.siteName,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: YOUR_MODEL_NAME || 'deepseek/deepseek-r1-0528:free',
+          model: config.modelName,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
