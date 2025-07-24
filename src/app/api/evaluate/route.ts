@@ -27,10 +27,16 @@ export async function POST(req: NextRequest) {
 
     const result = await getAIScores(community, district, layout, config)
     return NextResponse.json(result)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('API evaluation error:', error)
+    let errorMessage = 'Evaluation failed'
+    if (error instanceof Error) {
+      errorMessage = error.message
+    } else if (error && typeof error === 'object' && 'message' in error) {
+      errorMessage = String(error.message)
+    }
     return NextResponse.json(
-      { error: error.message || 'Evaluation failed' },
+      { error: errorMessage },
       { status: 500 }
     )
   }
