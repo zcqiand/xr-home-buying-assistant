@@ -4,13 +4,7 @@ interface ProsCons {
   pros: string[];
   cons: string[];
 }
-import { 
-  locationCriteria,
-  conditionCriteria,
-  buildingAgeCriteria,
-  layoutCriteria,
-  surroundingCriteria
-} from "../constants/evaluationCriteria";
+import { evaluationConfig } from "../constants/evaluationCriteria";
 
 export async function getAIScores(
   community: string,
@@ -33,47 +27,59 @@ export async function getAIScores(
     throw new Error("OpenRouter API密钥未配置");
   }
 
-  // 添加重试机制处理速率限制
-  const retries = 3;
-  let delay = 1000; // 初始延迟1秒
+  
   let lastError = null;
-
-  for (let attempt = 0; attempt < retries; attempt++) {
     try {
       // 构建系统提示
       const systemPrompt = `你是一位专业的房产评估师。请根据提供的信息，按照以下评分规则进行专业评估：
         
       ## 地理位置评分规则
-      ${locationCriteria.map(c => `- [${c.group}]${c.label}: ${c.min}-${c.max}分`).join('\n')}
+      ${Object.entries(evaluationConfig.location).map(([group, items]) =>
+        `- 【${group}】\n${items.map(item => `    ${item.id}.${item.label}: ${item.min}-${item.max}分`).join('\n')}`
+      ).join('\n')}
         
       ## 房屋状况评分规则
-      ${conditionCriteria.map(c => `- [${c.group}]${c.label}: ${c.min}-${c.max}分`).join('\n')}
+      ${Object.entries(evaluationConfig.condition).map(([group, items]) =>
+        `- 【${group}】\n${items.map(item => `    ${item.id}.${item.label}: ${item.min}-${item.max}分`).join('\n')}`
+      ).join('\n')}
         
       ## 楼龄评分规则
-      ${buildingAgeCriteria.map(c => `- [${c.group}]${c.label}: ${c.min}-${c.max}分`).join('\n')}
+      ${Object.entries(evaluationConfig.buildingAge).map(([group, items]) =>
+        `- 【${group}】\n${items.map(item => `    ${item.id}.${item.label}: ${item.min}-${item.max}分`).join('\n')}`
+      ).join('\n')}
         
       ## 户型与朝向评分规则
-      ${layoutCriteria.map(c => `- [${c.group}]${c.label}: ${c.min}-${c.max}分`).join('\n')}
+      ${Object.entries(evaluationConfig.layout).map(([group, items]) =>
+        `- 【${group}】\n${items.map(item => `    ${item.id}.${item.label}: ${item.min}-${item.max}分`).join('\n')}`
+      ).join('\n')}
         
       ## 周边配套评分规则
-      ${surroundingCriteria.map(c => `- [${c.group}]${c.label}: ${c.min}-${c.max}分`).join('\n')}
-        
+      ${Object.entries(evaluationConfig.surrounding).map(([group, items]) =>
+        `- 【${group}】\n${items.map(item => `    ${item.id}.${item.label}: ${item.min}-${item.max}分`).join('\n')}`
+      ).join('\n')}
+      
+      ## 重要定义
+      - 组别：指评分规则中用方括号【】标识的字符，如【商业】、【景观】、【交通】等
+
       请严格遵循以下要求：
-      0. 评估时确保评分细项，每个组别下有且只有一个评分项，并且不能重复
+      0. 每个评分规则组别必须有且仅有一个评分项
       1. 只返回JSON格式数据，不要包含任何额外文本或解释
       2. 使用以下字段结构：
-      {
-        "locationScores": { ... },
-        "conditionScores": { ... },
-        "buildingAgeScores": { ... },
-        "layoutScores": { ... },
-        "surroundingScores": { ... },
-        "prosCons": {
-          "pros": ["优点1", "优点2"],
-          "cons": ["缺点1", "缺点2"]
-        }
-      }
-      3. 每个字段的值应为包含具体评分项的对象和描述`;
+     {
+       "locationScores": { 
+        [{"[规则ID].[规则描述] [分数范围]": [实际分数]}, ...],
+        // 示例: [{"B1.区域性商业中心 20-25": 22}, ...]
+      },
+       "conditionScores": { ... },
+       "buildingAgeScores": { ... },
+       "layoutScores": { ... },
+       "surroundingScores": { ... },
+       "prosCons": {
+         "pros": ["优点1", "优点2"],
+         "cons": ["缺点1", "缺点2"]
+       }
+     }
+      3. 每个字段的值应为包含具体评分项的对象`;
       
       // 调试日志：验证提示词内容
       console.log('[DEBUG] 系统提示词:', systemPrompt);
@@ -99,15 +105,10 @@ export async function getAIScores(
 
       if (!response.ok) {
         const errorBody = await response.text();
-        let errorMessage = `API请求失败:
+        const errorMessage = `API请求失败:
           URL: ${response.url}
           状态码: ${response.status}
           响应体: ${errorBody}`;
-          
-        // 添加针对429错误的特殊提示
-        if (response.status === 429) {
-          errorMessage += `\n\n提示：您已达到API速率限制。请考虑设置您自己的OpenRouter API密钥以避免公共速率限制。详情请参考：https://openrouter.ai/settings/integrations`;
-        }
         
         throw new Error(errorMessage);
       }
@@ -126,6 +127,14 @@ export async function getAIScores(
       // 直接使用API返回的字段结构，无需转换
       const normalizedContent = parsedContent;
       
+      // 添加调试日志，检查API返回的数据格式
+      console.log('[DEBUG] 解析后的数据:', JSON.stringify(parsedContent, null, 2));
+      console.log('[DEBUG] locationScores类型:', typeof parsedContent.locationScores);
+      console.log('[DEBUG] locationScores是否为数组:', Array.isArray(parsedContent.locationScores));
+      if (parsedContent.locationScores) {
+        console.log('[DEBUG] locationScores内容:', JSON.stringify(parsedContent.locationScores));
+      }
+      
       // 验证必需字段
       const requiredKeys = [
         'locationScores',
@@ -143,25 +152,31 @@ export async function getAIScores(
         }
       }
       
-      console.log('[DEBUG] 标准化后的评分数据:', JSON.stringify(normalizedContent));
-      return normalizedContent;
+      // 在 return normalizedContent; 之前添加数据转换逻辑
+      const convertScoresFormat = (scores: Record<string, number>[]) => {
+        return scores.reduce((acc, item) => {
+          const [key, value] = Object.entries(item)[0];
+          return { ...acc, [key]: value };
+        }, {});
+      };
+
+      // 转换所有评分数据格式
+      const finalContent = {
+        ...normalizedContent,
+        locationScores: convertScoresFormat(normalizedContent.locationScores),
+        conditionScores: convertScoresFormat(normalizedContent.conditionScores),
+        buildingAgeScores: convertScoresFormat(normalizedContent.buildingAgeScores),
+        layoutScores: convertScoresFormat(normalizedContent.layoutScores),
+        surroundingScores: convertScoresFormat(normalizedContent.surroundingScores)
+      };
+
+      console.log('[DEBUG] 转换后的评分数据:', JSON.stringify(finalContent));
+      return finalContent;
+
+
     } catch (error) {
       lastError = error;
-      console.error(`API请求失败(尝试 ${attempt + 1}/${retries}):`, error);
-      
-      // 如果是429错误且还有重试次数，则等待后重试
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes('429') && attempt < retries - 1) {
-        console.log(`等待 ${delay}ms 后重试...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        delay *= 2; // 指数退避
-      } else {
-        break; // 其他错误或重试次数用尽
-      }
+      console.error(`API请求失败:`, error);
+      throw lastError || new Error('API请求失败');
     }
-  }
-  
-  // 所有重试失败后抛出错误
-  console.error('所有重试失败:', lastError);
-  throw lastError || new Error('API请求失败');
 }

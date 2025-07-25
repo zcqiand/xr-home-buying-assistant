@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -73,6 +73,34 @@ export default function EvaluationForm() {
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // 当基准房价或面积变化时，重新计算预估单价和总价
+  useEffect(() => {
+    if (result && result.detailedScores && basePrice !== "" && area !== "") {
+      const basePriceValue = typeof basePrice === 'string' ? parseFloat(basePrice) : basePrice;
+      const areaValue = typeof area === 'string' ? parseFloat(area) : area;
+      
+      // 重新计算预估单价和总价
+      const { pricePerSqM } = calculatePropertyEvaluation(
+        {
+          locationScores: result.detailedScores.locationScores,
+          conditionScores: result.detailedScores.conditionScores,
+          buildingAgeScores: result.detailedScores.buildingAgeScores,
+          layoutScores: result.detailedScores.layoutScores,
+          surroundingScores: result.detailedScores.surroundingScores
+        },
+        basePriceValue
+      );
+      
+      const totalPrice = calculateTotalPrice(pricePerSqM, areaValue);
+      
+      // 更新结果状态
+      setResult({
+        ...result,
+        pricePerSqM,
+        totalPrice
+      });
+    }
+  }, [basePrice, area]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
