@@ -7,6 +7,7 @@ interface ProsCons {
 import { evaluationConfig } from "../constants/evaluationCriteria";
 
 export async function getAIScores(
+  city: string,
   community: string,
   district: string,
   floor: string,
@@ -21,6 +22,7 @@ export async function getAIScores(
     modelName: string;
   }
 ): Promise<EvaluationScores & { prosCons: ProsCons }> {
+  console.log('[DEBUG] getAIScores接收到的参数:', { city, community, district, floor, direction, renovation, layout, additionalDesc });
   
   // 确保API密钥存在
   if (!config.apiKey) {
@@ -79,12 +81,14 @@ export async function getAIScores(
          "cons": ["缺点1", "缺点2"]
        }
      }
-      3. 每个字段的值应为包含具体评分项的对象`;
+      3. 每个字段的值应为包含具体评分项的对象
+      
+      请评估${city}${district}的${community}小区，楼层${floor}，朝向${direction}，${renovation}装修，户型${layout}，补充描述：${additionalDesc}`;
       
       // 调试日志：验证提示词内容
       console.log('[DEBUG] 系统提示词:', systemPrompt);
 
-      const userPrompt = `评估宁波市${district}的${community}小区，${floor}，朝向${direction}，${renovation}装修，户型${layout}，补充描述：${additionalDesc}`;
+      const userPrompt = `评估${city}${district}的${community}小区，楼层${floor}，朝向${direction}，${renovation}装修，户型${layout}，补充描述：${additionalDesc}`;
 
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',

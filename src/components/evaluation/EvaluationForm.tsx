@@ -22,20 +22,20 @@ import { calculatePropertyEvaluation, calculateTotalPrice } from "@/services/eva
 // 移除客户端直接调用
 
 const cities = [
-  { id: "ningbo", name: "宁波市" },
+  { id: "宁波市", name: "宁波市" },
 ];
 
 const districts = [
-  { id: "yinzhou", name: "鄞州区", basePrice: 25554 },
-  { id: "haishu", name: "海曙区", basePrice: 20141 },
-  { id: "jiangbei", name: "江北区", basePrice: 22879 },
-  { id: "zhenhai", name: "镇海区", basePrice: 25000 },
-  { id: "beilun", name: "北仑区", basePrice: 14715 },
-  { id: "fenghua", name: "奉化区", basePrice: 17831 },
+  { id: "鄞州区", name: "鄞州区", basePrice: 25554 },
+  { id: "海曙区", name: "海曙区", basePrice: 20141 },
+  { id: "江北区", name: "江北区", basePrice: 22879 },
+  { id: "镇海区", name: "镇海区", basePrice: 25000 },
+  { id: "北仑区", name: "北仑区", basePrice: 14715 },
+  { id: "奉化区", name: "奉化区", basePrice: 17831 },
 ];
 
 export default function EvaluationForm() {
-  const [city, setCity] = useState("ningbo");
+  const [city, setCity] = useState("宁波市");
   const [district, setDistrict] = useState("");
   const [basePrice, setBasePrice] = useState<number | string>("");
   const [community, setCommunity] = useState("");
@@ -124,6 +124,7 @@ export default function EvaluationForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          city,
           community,
           district,
           layout,
@@ -181,7 +182,7 @@ export default function EvaluationForm() {
   };
   
   const resetForm = () => {
-    setCity("ningbo");
+    setCity("宁波市");
     setDistrict("");
     setBasePrice("");
     setCommunity("");
@@ -333,10 +334,10 @@ export default function EvaluationForm() {
                 <SelectValue placeholder="选择装修程度" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="rough">毛坯</SelectItem>
-                <SelectItem value="simple">简装</SelectItem>
-                <SelectItem value="hardcover">精装</SelectItem>
-                <SelectItem value="luxury">豪装</SelectItem>
+                <SelectItem value="毛坯">毛坯</SelectItem>
+                <SelectItem value="简装">简装</SelectItem>
+                <SelectItem value="精装">精装</SelectItem>
+                <SelectItem value="豪装">豪装</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -403,9 +404,9 @@ export default function EvaluationForm() {
                 {floorTotal && <div>总楼层: {floorTotal}</div>}
                 {direction && <div>朝向: {direction}</div>}
                 {decoration && <div>装修程度: {
-                  decoration === "rough" ? "毛坯" :
-                  decoration === "simple" ? "简装" :
-                  decoration === "hardcover" ? "精装" : "豪装"
+                  decoration === "毛坯" ? "毛坯" :
+                  decoration === "简装" ? "简装" :
+                  decoration === "精装" ? "精装" : "豪装"
                 }</div>}
               </div>
               {additionalDesc && (
