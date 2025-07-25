@@ -44,22 +44,23 @@ export async function getAIScores(
       const systemPrompt = `你是一位专业的房产评估师。请根据提供的信息，按照以下评分规则进行专业评估：
         
       ## 地理位置评分规则
-      ${locationCriteria.map(c => `- ${c.label}: ${c.min}-${c.max}分`).join('\n')}
+      ${locationCriteria.map(c => `- [${c.group}]${c.label}: ${c.min}-${c.max}分`).join('\n')}
         
       ## 房屋状况评分规则
-      ${conditionCriteria.map(c => `- ${c.label}: ${c.min}-${c.max}分`).join('\n')}
+      ${conditionCriteria.map(c => `- [${c.group}]${c.label}: ${c.min}-${c.max}分`).join('\n')}
         
       ## 楼龄评分规则
-      ${buildingAgeCriteria.map(c => `- ${c.label}: ${c.min}-${c.max}分`).join('\n')}
+      ${buildingAgeCriteria.map(c => `- [${c.group}]${c.label}: ${c.min}-${c.max}分`).join('\n')}
         
       ## 户型与朝向评分规则
-      ${layoutCriteria.map(c => `- ${c.label}: ${c.min}-${c.max}分`).join('\n')}
+      ${layoutCriteria.map(c => `- [${c.group}]${c.label}: ${c.min}-${c.max}分`).join('\n')}
         
       ## 周边配套评分规则
-      ${surroundingCriteria.map(c => `- ${c.label}: ${c.min}-${c.max}分`).join('\n')}
+      ${surroundingCriteria.map(c => `- [${c.group}]${c.label}: ${c.min}-${c.max}分`).join('\n')}
         
       请严格遵循以下要求：
-      1. 只返回JSON格式数据，不要包含任何额外文本
+      0. 评估时确保评分细项，每个组别下有且只有一个评分项，并且不能重复
+      1. 只返回JSON格式数据，不要包含任何额外文本或解释
       2. 使用以下字段结构：
       {
         "locationScores": { ... },
@@ -72,7 +73,10 @@ export async function getAIScores(
           "cons": ["缺点1", "缺点2"]
         }
       }
-      3. 每个字段的值应为包含具体评分项的对象`;
+      3. 每个字段的值应为包含具体评分项的对象和描述`;
+      
+      // 调试日志：验证提示词内容
+      console.log('[DEBUG] 系统提示词:', systemPrompt);
 
       const userPrompt = `评估宁波市${district}的${community}小区，${floor}，朝向${direction}，${renovation}装修，户型${layout}，补充描述：${additionalDesc}`;
 
