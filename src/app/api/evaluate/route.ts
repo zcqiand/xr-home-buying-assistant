@@ -5,18 +5,20 @@ export async function POST(req: NextRequest) {
   try {
     const { city, community, district, layout, floor, direction, renovation, additionalDesc } = await req.json()
     console.log('[DEBUG] API接收到的参数:', { city, community, district, layout, floor, direction, renovation, additionalDesc });
-    
+
     // 从环境变量获取配置（服务器端安全）
     const config: {
+      apiUrl: string;
       apiKey: string | undefined;
       siteUrl: string;
       siteName: string;
       modelName: string;
     } = {
-      apiKey: process.env.NEXT_PUBLIC_OPENROUTER_API_KEY,
-      siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-      siteName: process.env.NEXT_PUBLIC_SITE_NAME || 'Home Buying Assistant',
-      modelName: process.env.NEXT_PUBLIC_MODEL_NAME || 'deepseek/deepseek-r1-0528:free'
+      apiUrl: process.env.OPENAI_API_URL || 'https://openrouter.ai/api/v1',
+      apiKey: process.env.OPENAI_API_KEY,
+      siteUrl: process.env.SITE_URL || 'http://localhost:3000',
+      siteName: process.env.SITE_NAME || 'Home Buying Assistant',
+      modelName: process.env.OPENAI_MODEL || 'deepseek/deepseek-r1-0528:free'
     }
 
     if (!config.apiKey) {
